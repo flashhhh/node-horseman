@@ -75,12 +75,13 @@ Create a new instance that can navigate around the web.
 
 The available options are:
 
-  * `clientScripts` an array of local JavaScript files to load onto each page.
   * `timeout`: how long to wait for page loads or wait periods,
     default `5000` ms.
   * `interval`: how frequently to poll for page load state, default `50` ms.
   * `loadImages`: load all inlined images, default `true`.
   * `switchToNewTab`: switch to new tab when created, default `false`.
+  * `diskCache`: enable disk cache, default `false`.
+  * `diskCachePath`: location for the disk cache. *(requires PhantomJS 2.0.0 or above)*
   * `cookiesFile`: A file where to store/use cookies.
   * `ignoreSSLErrors`: ignores SSL errors,
     such as expired or self-signed certificate errors.
@@ -106,6 +107,11 @@ The available options are:
     default not set.
   * `phantomPath`: If PhantomJS is not installed in your path,
     you can use this option to specify the executable's location.
+  * `phantomOptions`: Explicit PhantomJS options, e.g.
+    `{'ssl-certificates-path': 'ca.pem'}`.
+    For a complete list refer to the [PhantomJS command line interface](
+    http://phantomjs.org/api/command-line.html).
+    **These options have precedence over options implicitly set by Horseman.**
   * `debugPort`: Enable web inspector on specified port, default not set.
   * `debugAutorun`: Autorun on launch when in debug mode, default is true.
 
@@ -373,15 +379,17 @@ Type must be one of 'PNG', 'GIF', or 'JPEG'.
 
 #### .crop(area, path)
 
+[getBoundingClientRect]: https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
 Takes a cropped screenshot of the page.
 `area` can be a string identifying an html element on the screen to crop to,
-or a getBoundingClientRect object.
+or a [getBoundingClientRect][] object.
 
-#### .cropBase64(area, path)
+#### .cropBase64(area, type)
 
-Takes a cropped base64 encoded screenshot of the page.
+Returns a string representing a cropped, base64 encoded screenshot of the page.
 `area` can be a string identifying an html element on the screen to crop to,
-or a getBoundingClientRect object.
+or a [getBoundingClientRect][] object.
+Type must be one of 'PNG', 'GIF', or 'JPEG'.
 
 #### .pdf(path, \[paperSize\])
 
