@@ -1341,6 +1341,22 @@ describe('Horseman', function() {
 				});
 		});
 
+		it('should timeout after a specific time', function() {
+			var start = new Date();
+			var horseman = new Horseman({
+				timeout: defaultTimeout,
+			});
+			return horseman
+				.open(serverUrl)
+				.waitForSelector("#not-existing-id", { timeout : defaultTimeout/5})
+				.close()
+				.catch(function(err){
+					var end = new Date();
+					var diff = end - start;
+					diff.should.be.below(defaultTimeout/2); //may be a ms or so off.
+				});
+		});
+
 		it('should wait until a selector is seen', function() {
 			var horseman = new Horseman({
 				timeout: defaultTimeout,
@@ -1368,6 +1384,26 @@ describe('Horseman', function() {
 				.close()
 				.then(function() {
 					timeoutFired.should.be.true();
+				});
+		});
+
+		it('should call onTimeout if timeout in waitForNextPage with custom timeout', function() {
+			var start = new Date();
+			var timeoutHorseman = new Horseman({
+				timeout: 10
+			});
+			var timeoutFiredTime = 0;
+			return timeoutHorseman
+				.on('timeout', function() {
+					var end = new Date();
+					var diff = end - start;
+					timeoutFiredTime = diff;
+				})
+				.waitForNextPage({timeout: 1000})
+				.catch(Horseman.TimeoutError, function() {})
+				.close()
+				.then(function() {
+					timeoutFiredTime.should.be.above(900);
 				});
 		});
 
@@ -1514,6 +1550,22 @@ describe('Horseman', function() {
 				.close()
 				.should.eventually
 				.equal('This is frame 1.');
+		});
+
+		it('should let you evaluate after frame switch', function() {
+			var horseman = new Horseman({
+				timeout: defaultTimeout,
+			});
+			return horseman
+				.open(serverUrl + 'frames.html')
+				.switchToFrame('frame1')
+				.waitForSelector('h1')
+				.evaluate(function() {
+					return document.querySelector('body').id;
+				})
+				.close()
+				.should.eventually
+				.equal('f1');
 		});
 
 		it('should let you switch to the main frame', function() {
@@ -2010,13 +2062,13 @@ describe('Horseman', function() {
 				proxy: 'localhost:' + PROXY_PORT,
 				proxyType: 'http',
 			});
-			var hadHeader = 'truthy';
+			var hadHeader = false;
 			return horseman
 				.on('resourceReceived', function(resp) {
 					var hasHeader = resp.headers.some(function(header) {
 						return header.name === PROXY_HEADER;
 					});
-					hadHeader = hadHeader && hasHeader;
+					hadHeader = hadHeader || hasHeader;
 				})
 				.open('http://www.google.com')
 				.close()
@@ -2032,14 +2084,14 @@ describe('Horseman', function() {
 			if (phantomVersion.major < 2) {
 				this.skip('setProxy requires PhantomJS 2.0 or greater');
 			}
-			var hadHeader = 'truthy';
+			var hadHeader = false;
 			return horseman
 				.setProxy('localhost', PROXY_PORT)
 				.on('resourceReceived', function(resp) {
 					var hasHeader = resp.headers.some(function(header) {
 						return header.name === PROXY_HEADER;
 					});
-					hadHeader = hadHeader && hasHeader;
+					hadHeader = hadHeader || hasHeader;
 				})
 				.open('http://www.google.com')
 				.then(function() {
